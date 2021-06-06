@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
@@ -20,12 +21,16 @@ public class Model {
 	private List<Adiacenza> adiacenze;
 	private boolean grafoCreato;
 	
+	private List<Match> percorsoBest;
+	private Integer pesoMax;
+	
 	public Model() {
 		this.dao = new PremierLeagueDAO();
 		this.idMap= new HashMap<>();
 		this.dao.listAllMatches(idMap);
 		this.adiacenze= new ArrayList<>();
 		this.grafoCreato=false;
+		this.percorsoBest= new ArrayList<>();
 	}
 	
 	public void creaGrafo(int min, int mese) {
@@ -71,4 +76,57 @@ public class Model {
 		return best;
 	}
 	
+	public Set<Match> getVertici(){
+		return grafo.vertexSet();
+	}
+	
+	public List<Match> percorsoMax(Match partenza, Match arrivo){
+		this.percorsoBest=null;
+		this.pesoMax=0;
+		List<Match> parziale = new ArrayList<>();
+		parziale.add(partenza);
+		ricorsione(parziale,arrivo,pesoMax);
+		return this.percorsoBest;
+	}
+	
+	private void ricorsione(List<Match> parziale, Match arrivo, int pesoMax) {
+		Match ultimo = parziale.get(parziale.size()-1);
+		if (ultimo.equals(arrivo)) { //caso terminale
+			int peso= pesoParziale(parziale);
+			if (this.percorsoBest==null  || peso>pesoMax) {
+				this.pesoMax=peso;
+				this.percorsoBest= new ArrayList<>(parziale);
+				return;
+			}
+			else
+				return; // sono arrivato al Match di arrivo ma il percorso ottenuto non è il più lungo
+		}
+		
+		//faccio ricorsione:
+		for (DefaultWeightedEdge e : grafo.edgesOf(ultimo)) { //devo controllare di evitare i cicli
+			Match prossimo = Graphs.getOppositeVertex(grafo, e, ultimo);
+			//controllo che non ho il match successivo con le stesse squadre:
+			if ( (prossimo.getTeamHomeID().equals(ultimo.getTeamHomeID()) && prossimo.getTeamAwayID().equals(ultimo.getTeamAwayID()) ) ||
+				  ( prossimo.getTeamHomeID().equals(ultimo.getTeamAwayID()) && prossimo.getTeamAwayID().equals(ultimo.getTeamHomeID())  )	   )
+				continue; //salto l'iterazione ma continuo il ciclo
+			if (!parziale.contains(prossimo)) {
+				parziale.add(prossimo);
+				ricorsione(parziale,arrivo,pesoMax);
+				parziale.remove(parziale.size()-1);
+			}
+		}
+	}
+	
+	private Integer pesoParziale(List<Match> parziale) {
+		int peso=0;
+		for (Match m : parziale)
+			for (DefaultWeightedEdge e : grafo.edgesOf(m)) {
+				peso += grafo.getEdgeWeight(e);
+			}
+		return peso;
+	}
+	
+	public int getPesoMax() {
+		return this.pesoMax;
+	}
 }

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.PremierLeague.model.Adiacenza;
+import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -44,10 +45,10 @@ public class FXMLController {
     private ComboBox<Integer> cmbMese; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbM1"
-    private ComboBox<?> cmbM1; // Value injected by FXMLLoader
+    private ComboBox<Match> cmbM1; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbM2"
-    private ComboBox<?> cmbM2; // Value injected by FXMLLoader
+    private ComboBox<Match> cmbM2; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
@@ -90,11 +91,31 @@ public class FXMLController {
     	this.txtResult.setText("GRAFO CREATO\n");
     	this.txtResult.appendText("# vertici: "+model.getNumVertici());
     	this.txtResult.appendText("\n# archi: "+model.getNumArchi());
+    	this.cmbM1.getItems().clear();
+    	this.cmbM2.getItems().clear();
+    	this.cmbM1.getItems().addAll(model.getVertici());
+    	this.cmbM2.getItems().addAll(model.getVertici());
     }
 
     @FXML
     void doCollegamento(ActionEvent event) {
-    	
+    	this.txtResult.clear();
+    	Match partenza= this.cmbM1.getValue();
+    	if(partenza==null) {
+    		this.txtResult.setText("Errore, selezionare un match di partenza");
+    		return;
+    	}
+    	Match arrivo= this.cmbM2.getValue();
+    	if(arrivo==null) {
+    		this.txtResult.setText("Errore, selezionare un match di arrivo");
+    		return;
+    	}
+    	List<Match> best= model.percorsoMax(partenza, arrivo);
+    	this.txtResult.setText("Percorso con peso massimo da:\n"+partenza.toString()+"\na: "+arrivo.toString()+"\n\n");
+    	for (Match m : best) {
+    		this.txtResult.appendText(m.toString()+"\n");
+    	}
+    	this.txtResult.appendText("Con peso totale: "+model.getPesoMax());
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
