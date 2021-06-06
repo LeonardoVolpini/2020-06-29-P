@@ -119,10 +119,14 @@ public class Model {
 	
 	private Integer pesoParziale(List<Match> parziale) {
 		int peso=0;
-		for (Match m : parziale)
-			for (DefaultWeightedEdge e : grafo.edgesOf(m)) {
-				peso += grafo.getEdgeWeight(e);
-			}
+		int i=0; //indice che mi serve per prendere il match successivo in parziale
+		for (Match m : parziale) {
+			if (i==(parziale.size()-1)) 
+				break;
+			DefaultWeightedEdge e = grafo.getEdge(m, parziale.get(i+1));
+			i++;
+			peso += grafo.getEdgeWeight(e);
+		}
 		return peso;
 	}
 	
